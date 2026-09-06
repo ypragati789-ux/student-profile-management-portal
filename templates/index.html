@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Profile Management Portal</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 7px 0 12px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+
+        .add-btn {
+            background: #2563eb;
+            color: white;
+        }
+
+        .edit-btn {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .delete-btn {
+            background: #dc2626;
+            color: white;
+        }
+
+        .student {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-top: 12px;
+            border-radius: 8px;
+        }
+
+        .student h3 {
+            margin-top: 0;
+        }
+
+        .search {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🎓 Student Profile Management Portal</h1>
+
+    <div class="card">
+        <h2>Add Student</h2>
+
+        <input id="student_id" placeholder="Student ID">
+        <input id="name" placeholder="Student Name">
+
+        <select id="gender">
+            <option value="">Select Gender</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+        </select>
+
+        <label>Date of Birth</label>
+        <input type="date" id="dob">
+
+        <input id="email" placeholder="Email">
+        <input id="mobile" placeholder="Mobile Number">
+        <input id="branch" placeholder="Branch">
+        <input id="semester" placeholder="Semester">
+
+        <textarea id="address" placeholder="Address"></textarea>
+
+        <button class="add-btn" onclick="addStudent()">
+            Add Student
+        </button>
+    </div>
+
+    <div class="card">
+        <h2>Student Directory</h2>
+
+        <input
+            class="search"
+            id="search"
+            placeholder="Search by name, ID or branch..."
+            onkeyup="searchStudents()"
+        >
+
+        <div id="studentList"></div>
+    </div>
+
+</div>
+
+<script>
+
+let students = [];
+
+async function loadStudents() {
+    const response = await fetch("/api/students");
+    students = await response.json();
+    displayStudents(students);
+}
+
+async function addStudent() {
+
+    const student = {
+        student_id: document.getElementById("student_id").value,
+        name: document.getElementById("name").value,
+        gender: document.getElementById("gender").value,
+        dob: document.getElementById("dob").value,
+        email: document.getElementById("email").value,
+        mobile: document.getElementById("mobile").value,
+        branch: document.getElementById("branch").value,
+        semester: document.getElementById("semester").value,
+        address: document.getElementById("address").value
+    };
+
+    if (!student.student_id || !student.name) {
+        alert("Student ID and Name are required!");
+        return;
+    }
+
+    const response = await fetch("/api/students", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(student)
+    });
+
+    const result = await response.json();
+
+    alert(result.message || result.error);
+
+    if (response.ok) {
+        clearForm();
+        loadStudents();
+    }
+}
+
+function displayStudents(data) {
+
+    const list = document.getElementById("studentList");
+    list.innerHTML = "";
+
+    if (data.length === 0) {
+        list.innerHTML = "<p>No students found.</p>";
+        return;
+    }
+
+    data.forEach(student => {
+
+        list.innerHTML += `
+            <div class="student">
+
+                <h3>${student.name}</h3>
+
+                <p><b>Student ID:</b> ${student.student_id}</p>
+                <p><b>Gender:</b> ${student.gender || "-"}</p>
+                <p><b>DOB:</b> ${student.dob || "-"}</p>
+                <p><b>Email:</b> ${student.email || "-"}</p>
+                <p><b>Mobile:</b> ${student.mobile || "-"}</p>
+                <p><b>Branch:</b> ${student.branch || "-"}</p>
+                <p><b>Semester:</b> ${student.semester || "-"}</p>
+                <p><b>Address:</b> ${student.address || "-"}</p>
+
+                <button class="edit-btn"
+                    onclick="editStudent(${student.id})">
+                    Edit
+                </button>
+
+                <button class="delete-btn"
+                    onclick="deleteStudent(${student.id})">
+                    Delete
+                </button>
+
+            </div>
+        `;
+    });
+}
+
+function searchStudents() {
+
+    const text = document
+        .getElementById("search")
+        .value
+        .toLowerCase();
+
+    const filtered = students.filter(student =>
+        student.name.toLowerCase().includes(text) ||
+        student.student_id.toLowerCase().includes(text) ||
+        (student.branch || "").toLowerCase().includes(text)
+    );
+
+    displayStudents(filtered);
+}
+
+async function deleteStudent(id) {
+
+    if (!confirm("Delete this student?")) {
+        return;
+    }
+
+    const response = await fetch(`/api/students/${id}`, {
+        method: "DELETE"
+    });
+
+    const result = await response.json();
+
+    alert(result.message || result.error);
+
+    loadStudents();
+}
+
+async function editStudent(id) {
+
+    const student = students.find(s => s.id === id);
+
+    if (!student) return;
+
+    const name = prompt("Enter student name:", student.name);
+
+    if (name === null) return;
+
+    const updatedStudent = {
+        student_id: student.student_id,
+        name: name,
+        gender: student.gender,
+        dob: student.dob,
+        email: student.email,
+        mobile: student.mobile,
+        branch: student.branch,
+        semester: student.semester,
+        address: student.address
+    };
+
+    const response = await fetch(`/api/students/${id}`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(updatedStudent)
+    });
+
+    const result = await response.json();
+
+    alert(result.message || result.error);
+
+    loadStudents();
+}
+
+function clearForm() {
+
+    document.getElementById("student_id").value = "";
+    document.getElementById("name").value = "";
+    document.getElementById("gender").value = "";
+    document.getElementById("dob").value = "";
+    document.getElementById("email").value = "";
+    document.getElementById("mobile").value = "";
+    document.getElementById("branch").value = "";
+    document.getElementById("semester").value = "";
+    document.getElementById("address").value = "";
+}
+
+loadStudents();
+
+</script>
+
+</body>
+</html>
