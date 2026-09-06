@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify,render_template
 import sqlite3
 
 app = Flask(__name__)
@@ -37,10 +37,7 @@ def init_db():
 # Home
 @app.route("/")
 def home():
-    return jsonify({
-        "message": "Student Profile Management Portal API",
-        "status": "API is running"
-    })
+    return render_template("index.html")
 
 
 # GET - all students
