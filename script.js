@@ -24,7 +24,9 @@ async function fetchStudents(){
     document.getElementById("avgAge").innerText = Math.round(totalAge/allStudents.length);
     document.getElementById("loader").style.display="none";
   }catch(e){
-    document.getElementById("loader").innerText = "API Error: "+e;
+  document.getElementById("loader").style.display="none";
+  console.log("API Error", e);
+  alert("Internet slow aahe, please Refresh API button var click kara");
   }
 }
 
