@@ -26,7 +26,6 @@ async function fetchStudents(){
   }catch(e){
   document.getElementById("loader").style.display="none";
   console.log("API Error", e);
-  alert("Internet slow aahe, please Refresh API button var click kara");
   }
 }
 
